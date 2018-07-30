@@ -31,42 +31,21 @@ class Game
   end
 
   def turn_count
-  count = 0
-  cells.each do |play|
-    if play == "O" || play == "X"
-      count +=1
-    end
+    cells.count { |cell| cell == "X" || cell == "O" }
   end
-  count
-end
 
   def current_player
     # returns the correct player, X, for the third move
-    if turn_count.even?
-      player_1
-    else
-      player_2
-    end
+    turn_count.even? ? player_1 : player_2
   end
 
   def won?
     # returns false for a draw
     # returns the correct winning combination in the case of a win
-    # isn't hard-coded
-    winner = nil
-    WIN_COMBINATIONS.each do |combo|
-      if combo.all? {|idx| cells[idx] == "X"}
-        winner = combo
-      elsif combo.all? {|idx| cells[idx] == "O"}
-        winner = combo
-      else
-        false
-      end
-    end
-    if winner != nil
-      winner
-    else
-      false
+    WIN_COMBINATIONS.detect do |combo|
+      @board.cells[combo[0]] == @board.cells[combo[1]] &&
+      @board.cells[combo[0]] == @board.cells[combo[2]] &&
+      @board.taken?(combo[0] + 1)
     end
   end
 
@@ -78,35 +57,20 @@ end
     # returns true for a draw
     # returns false for a won game
     # returns false for an in-progress game
-    if full? && !(won?)
-      true
-    else
-      false
-    end
+    full? && !(won?)
   end
 
   def over?
     # returns true for a draw
     # returns true for a won game
     # returns false for an in-progress game
-    if draw? || won? || full?
-      true
-    else
-      false
-    end
+    draw? || won? || full?
   end
   def winner
     # returns X when X won
     # returns O when O won
     # returns nil when no winner
-    WIN_COMBINATIONS.each do |combo|
-      if combo.all? {|idx| cells[idx] == "X"}
-        return "X"
-      elsif combo.all? {|idx| cells[idx] == "O"}
-        return "O"
-      end
-    end
-    nil
+    won? ? won?.first : nil
   end
   def turn
     # makes valid moves
@@ -125,18 +89,6 @@ end
       turn
     end
   end
-
-  # def play
-  #   @board.display
-  #   until over?
-  #     turn
-  #   end
-  #   if won?
-  #     puts "Congratulations #{winner}!"
-  #   elsif draw?
-  #     puts "Cat's Game!"
-  #   end
-  # end
 
   def play
     instructions
@@ -176,11 +128,6 @@ end
     end
   end
 
-  def self.welcome
-    puts "Welcome to Tic Tac Toe!"
-    puts
-  end
-
   def instructions
     puts
     puts "To play, please enter a number between 1-9 when prompted to place your token in the cells in the area numbered on the board below:"
@@ -193,32 +140,6 @@ end
     puts
     puts "To ask for instructions anytime, type 'instructions,' or to exit, type 'exit.'"
     puts
-  end
-
-  def self.start
-    welcome
-    puts "To begin, please select 0, 1, or 2 players:"
-    number = gets.chomp
-    if number == "0"
-      Game.new(Players::Computer.new("X"), player_2 = Players::Computer.new("O")).play
-    elsif number == "1"
-      puts "Do you want to go first as 'X'? Y or N."
-      ans = gets.chomp
-      if ans.downcase == "yes" || ans.downcase == "y"
-        puts "You are Player 1."
-        Game.new(Players::Human.new("X"), Players::Computer.new("O")).play
-      elsif ans.downcase == "n" || ans.downcase == "no"
-        puts "You are Player 2."
-        Game.new(Players::Computer.new("X"), Players::Human.new("O")).play
-      end
-    elsif number == "2"
-      puts "Thank you."
-      puts
-      puts "Player 1, please go first."
-      Game.new(Players::Human.new("X"), player_2 = Players::Human.new("O")).play
-    else
-      Game.start
-    end
   end
 
   def quit
@@ -238,7 +159,7 @@ end
   puts "Do you need a new configuration? Y or N"
   ans = gets.chomp
     if ans.upcase == "Y"
-      Game.start
+      TicTacToeCLI.start
     elsif ans.upcase == "N"
       @board.reset!
       play
